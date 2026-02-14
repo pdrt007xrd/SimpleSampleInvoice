@@ -264,3 +264,4 @@
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/SimpleExampleInvoice.pdb
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/SimpleExampleInvoice.genruntimeconfig.cache
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/ref/SimpleExampleInvoice.dll
+/home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/SimpleExampleInvoice.sourcelink.json

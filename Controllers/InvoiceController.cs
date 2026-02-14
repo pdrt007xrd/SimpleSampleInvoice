@@ -27,23 +27,26 @@ namespace SimpleExampleInvoice.Controllers
         {
             const int pageSize = 10;
 
-            Invoice? invoice;
-
             if (id == 0)
             {
-                invoice = new Invoice();
-                _context.Invoices.Add(invoice);
-                _context.SaveChanges();
-            }
-            else
-            {
-                invoice = _context.Invoices
-                    .Include(i => i.Items)
-                    .FirstOrDefault(i => i.Id == id);
+                var newInvoice = new Invoice
+                {
+                    CreatedAt = DateTime.Now,
+                    Titulo = ""
+                };
 
-                if (invoice == null)
-                    return NotFound();
+                _context.Invoices.Add(newInvoice);
+                _context.SaveChanges();
+
+                return RedirectToAction("Edit", new { id = newInvoice.Id });
             }
+
+            var invoice = _context.Invoices
+                .Include(i => i.Items)
+                .FirstOrDefault(i => i.Id == id);
+
+            if (invoice == null)
+                return NotFound();
 
             var totalInvoices = _context.Invoices.Count();
 
@@ -61,21 +64,23 @@ namespace SimpleExampleInvoice.Controllers
             return View(invoice);
         }
 
-        // ===============================
-        // SAVE CLIENT NAME
-        // ===============================
         [HttpPost]
-        public IActionResult SaveClient(int id, string clientName)
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(int id, string titulo, string clientName)
         {
             var invoice = _context.Invoices.Find(id);
             if (invoice == null)
                 return NotFound();
 
-            invoice.ClientName = clientName;
+            invoice.Titulo = titulo?.Trim() ?? string.Empty;
+            invoice.ClientName = clientName?.Trim() ?? string.Empty;
+
             _context.SaveChanges();
 
             return RedirectToAction("Edit", new { id });
         }
+
+
 
         // ===============================
         // ADD ITEM

@@ -14,16 +14,25 @@
 <hr />
 
 <!-- ================= CLIENT ================= -->
-<form asp-action="SaveClient" method="post">
+
+<form asp-action="Edit" method="post">
     <input type="hidden" name="id" value="@Model.Id" />
 
-    <label>Nombre del Cliente</label>
-    <input class="form-control" name="clientName" value="@Model.ClientName" />
+    <div class="mb-3">
+        <label>Título</label>
+        <input class="form-control" name="Titulo" value="@Model.Titulo" />
+    </div>
+
+    <div class="mb-3">
+        <label>Nombre del Cliente</label>
+        <input class="form-control" name="clientName" value="@Model.ClientName" />
+    </div>
 
     <button class="btn btn-primary mt-2">
-        Guardar Cliente
+        Guardar Información
     </button>
 </form>
+
 
 <hr />
 
@@ -78,9 +87,7 @@
 <hr />
 
 <!-- ================= ALL INVOICES ================= -->
-<h4>Facturas creadas</h4>
-
-<h4 class="mt-4">Facturas creadas</h4>
+<h4 class="mt-4">Lista de Facturas Creadas</h4>
 
 <table class="table table-sm table-striped table-bordered">
     <thead class="table-dark">
@@ -92,6 +99,9 @@
         </tr>
     </thead>
     <tbody>
+
+      
+
         @foreach (var inv in invoices)
         {
             <tr>

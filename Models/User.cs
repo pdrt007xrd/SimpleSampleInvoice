@@ -6,9 +6,9 @@ public class User
 {
     public int Id { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "El Usuario es obligatorio")]
     public string Username { get; set; } = string.Empty;
 
-    [Required]
+    [Required(ErrorMessage = "La contraseña es obligatoria")]
     public string Password { get; set; } = string.Empty;
 }

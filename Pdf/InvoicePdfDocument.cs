@@ -42,7 +42,7 @@ namespace SimpleExampleInvoice.Pdf
 
                     // ===== HEADER =====
                     col.Item().AlignCenter()
-                        .Text("Servicios Generales EM")
+                        .Text(_invoice.Titulo)
                         .FontSize(14)
                         .Bold();
 
