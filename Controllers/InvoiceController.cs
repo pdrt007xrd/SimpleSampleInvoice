@@ -66,15 +66,15 @@ namespace SimpleExampleInvoice.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, string titulo, string clientName)
+        public IActionResult Edit(int id, string titulo, string companyName, string clientName)
         {
             var invoice = _context.Invoices.Find(id);
             if (invoice == null)
                 return NotFound();
 
             invoice.Titulo = titulo?.Trim() ?? string.Empty;
+            invoice.CompanyName = companyName?.Trim() ?? string.Empty;
             invoice.ClientName = clientName?.Trim() ?? string.Empty;
-
             _context.SaveChanges();
 
             return RedirectToAction("Edit", new { id });

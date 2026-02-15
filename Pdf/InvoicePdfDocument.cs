@@ -39,10 +39,13 @@ namespace SimpleExampleInvoice.Pdf
                 page.Content().Column(col =>
                 {
                     col.Spacing(2); // compacto POS
+                    var companyName = string.IsNullOrWhiteSpace(_invoice.CompanyName)
+                        ? "Servicios Generales EM"
+                        : _invoice.CompanyName;
 
                     // ===== HEADER =====
                     col.Item().AlignCenter()
-                        .Text(_invoice.Titulo)
+                        .Text(companyName)
                         .FontSize(14)
                         .Bold();
 
