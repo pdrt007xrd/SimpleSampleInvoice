@@ -1,6 +1,7 @@
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 using SimpleExampleInvoice.Models;
+using System.Security.Cryptography;
 
 namespace SimpleExampleInvoice.Pdf
 {
@@ -18,6 +19,13 @@ namespace SimpleExampleInvoice.Pdf
         private string GetInvoiceNumber(int id)
         {
             return $"PP{id:D6}";
+        }
+
+        private string GetGenericPhone()
+        {
+            var middle = $"6{RandomNumberGenerator.GetInt32(0, 100):D2}";
+            var last = RandomNumberGenerator.GetInt32(0, 10000).ToString("D4");
+            return $"809-{middle}-{last}";
         }
 
 
@@ -49,11 +57,11 @@ namespace SimpleExampleInvoice.Pdf
                         .FontSize(14)
                         .Bold();
 
-                    col.Item().AlignCenter()
-                        .Text("Av. Principal #123, Santo Domingo");
+                    // col.Item().AlignCenter()
+                    //     .Text("Av. Principal #123, Santo Domingo");
 
                     col.Item().AlignCenter()
-                        .Text("Tel: 809-555-1234");
+                        .Text($"Tel: {GetGenericPhone()}");
 
                     col.Item().AlignCenter()
                         .Text($"Fecha: {DateTime.Now:dd/MM/yyyy hh:mm tt}");
@@ -76,10 +84,14 @@ namespace SimpleExampleInvoice.Pdf
                         .FontSize(10)
                         .Bold();
 
-                    // ===== separación HEADER → ITEMS =====
+                    // ===== doble separación HEADER → ITEMS =====
                     col.Item()
-                        .PaddingTop(8)
-                        .PaddingBottom(6)
+                        .PaddingTop(6)
+                        .LineHorizontal(0.5f);
+
+                    col.Item()
+                        .PaddingTop(1)
+                        .PaddingBottom(4)
                         .LineHorizontal(0.5f);
 
                     // ===== ITEMS =====
@@ -100,14 +112,29 @@ namespace SimpleExampleInvoice.Pdf
                         col.Item().PaddingBottom(2);
                     }
 
-                    // ===== separación ITEMS → TOTAL =====
+                    // ===== doble separación ITEMS → TOTAL =====
                     col.Item()
-                        .PaddingTop(8)
-                        .PaddingBottom(6)
+                        .PaddingTop(6)
                         .LineHorizontal(0.5f);
 
-                    // ===== TOTAL =====
-                    var total = _invoice.Items.Sum(x => x.Total);
+                    col.Item()
+                        .PaddingTop(1)
+                        .PaddingBottom(4)
+                        .LineHorizontal(0.5f);
+
+                    // ===== ITBIS + TOTAL =====
+                    var subtotal = _invoice.Items.Sum(x => x.Total);
+                    var itbis = subtotal * 0.18m;
+                    var total = subtotal + itbis;
+
+                    col.Item().AlignRight()
+                        .Text($"SUBTOTAL: {subtotal:C}")
+                        .FontSize(9);
+
+                    col.Item().AlignRight()
+                        .Text($"I.T.B.I.S (18%): {itbis:C}")
+                        .FontSize(9)
+                        .SemiBold();
 
                     col.Item().AlignRight()
                         .Text($"TOTAL: {total:C}")

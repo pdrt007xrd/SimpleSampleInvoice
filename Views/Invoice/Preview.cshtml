@@ -1,4 +1,4 @@
-<h3>Vista previa de factura</h3>
+<h3 class="text-center">Vista previa de factura</h3>
 
 <iframe src="/Invoice/Print/@ViewBag.InvoiceId"
         width="100%"
@@ -7,14 +7,19 @@
 </iframe>
 
 <div class="mt-3">
-    <a class="btn btn-dark"
+    <a class="btn btn-primary"
        href="/Invoice/Print/@ViewBag.InvoiceId"
        target="_blank">
         Imprimir / Descargar
     </a>
 
-    <a class="btn btn-secondary"
+    <a class="btn btn-primary"
        href="/Invoice/Edit/@ViewBag.InvoiceId">
         Volver
+    </a>
+
+    <a class="btn btn-primary"
+       href="/Invoice/Create">
+        Crear Factura
     </a>
 </div>

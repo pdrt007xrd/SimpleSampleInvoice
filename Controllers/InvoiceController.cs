@@ -25,34 +25,29 @@ namespace SimpleExampleInvoice.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var newInvoice = new Invoice
-            {
-                CreatedAt = DateTime.Now,
-                Titulo = string.Empty,
-                CompanyName = string.Empty,
-                ClientName = string.Empty
-            };
-
-            _context.Invoices.Add(newInvoice);
-            _context.SaveChanges();
-            TempData["InvoiceCreatedMessage"] = $"Factura #{newInvoice.Id} creada exitosamente";
-
-            return RedirectToAction("Edit", new { id = newInvoice.Id });
+            return RedirectToAction("Edit");
         }
 
         public IActionResult Edit(int id = 0, int page = 1)
         {
             const int pageSize = 10;
+            Invoice invoice;
 
             if (id == 0)
-                return RedirectToAction("Index", "Dashboard");
+            {
+                invoice = new Invoice();
+            }
+            else
+            {
+                var existingInvoice = _context.Invoices
+                    .Include(i => i.Items)
+                    .FirstOrDefault(i => i.Id == id);
 
-            var invoice = _context.Invoices
-                .Include(i => i.Items)
-                .FirstOrDefault(i => i.Id == id);
+                if (existingInvoice == null)
+                    return NotFound();
 
-            if (invoice == null)
-                return NotFound();
+                invoice = existingInvoice;
+            }
 
             var totalInvoices = _context.Invoices.Count();
 
@@ -74,6 +69,23 @@ namespace SimpleExampleInvoice.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, string companyName, string clientName)
         {
+            if (id == 0)
+            {
+                var newInvoice = new Invoice
+                {
+                    CreatedAt = DateTime.Now,
+                    Titulo = string.Empty,
+                    CompanyName = companyName?.Trim() ?? string.Empty,
+                    ClientName = clientName?.Trim() ?? string.Empty
+                };
+
+                _context.Invoices.Add(newInvoice);
+                _context.SaveChanges();
+
+                TempData["InvoiceCreatedMessage"] = $"Factura #{newInvoice.Id} creada exitosamente";
+                return RedirectToAction("Edit", new { id = newInvoice.Id });
+            }
+
             var invoice = _context.Invoices.Find(id);
             if (invoice == null)
                 return NotFound();

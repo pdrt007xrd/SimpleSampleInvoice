@@ -11,14 +11,14 @@
 
 @if (!string.IsNullOrWhiteSpace(createdMessage))
 {
-    <div class="position-fixed top-50 start-50 translate-middle p-3" style="z-index: 1080;">
+    <div class="position-fixed top-0 start-50 translate-middle-x p-3 mt-2" style="z-index: 1080;">
         <div id="invoiceCreatedToast"
              class="toast align-items-center text-bg-success border-0 shadow-lg"
              role="alert"
              aria-live="assertive"
              aria-atomic="true"
              data-bs-delay="3200"
-             style="min-width: 520px; font-size: 1.15rem;">
+             style="width: min(92vw, 360px); font-size: 1.05rem;">
             <div class="d-flex align-items-center p-2">
                 <div class="toast-body fw-semibold py-3 px-3">
                     @createdMessage
@@ -29,7 +29,14 @@
     </div>
 }
 
-<h2>Factura #@Model.Id</h2>
+@if (Model.Id == 0)
+{
+    <h2>Nueva Factura</h2>
+}
+else
+{
+    <h2>Factura #@Model.Id</h2>
+}
 
 <hr />
 
@@ -53,49 +60,58 @@
 
 <hr />
 
-<h4>Agregar detalle</h4>
+@if (Model.Id == 0)
+{
+    <div class="alert alert-info mt-3">
+        Guarda la información para crear la factura y luego agregar detalles.
+    </div>
+}
+else
+{
+    <h4>Agregar detalle</h4>
 
-<form asp-action="AddItem" method="post">
-    <input type="hidden" name="invoiceId" value="@Model.Id" />
+    <form asp-action="AddItem" method="post">
+        <input type="hidden" name="invoiceId" value="@Model.Id" />
 
-    <input class="form-control mb-2" name="description" placeholder="Descripción" />
-    <input class="form-control mb-2" name="quantity" type="number" placeholder="Cantidad" />
-    <input class="form-control mb-2" name="price" type="number" step="0.01" placeholder="Precio" />
+        <input class="form-control mb-2" name="description" placeholder="Descripción" />
+        <input class="form-control mb-2" name="quantity" type="number" placeholder="Cantidad" />
+        <input class="form-control mb-2" name="price" type="number" step="0.01" placeholder="Precio" />
 
-    <button class="btn btn-success">
-        Agregar
-    </button>
-</form>
+        <button class="btn btn-success">
+            Agregar
+        </button>
+    </form>
 
-<hr />
+    <hr />
 
-<h4>Detalles</h4>
+    <h4>Detalles</h4>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Descripción</th>
-            <th>Cantidad</th>
-            <th>Precio</th>
-            <th>Total</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Items ?? new List<SimpleExampleInvoice.Models.InvoiceItem>())
-        {
+    <table class="table table-bordered">
+        <thead>
             <tr>
-                <td>@item.Description</td>
-                <td>@item.Quantity</td>
-                <td>@item.Price</td>
-                <td>@(item.Quantity * item.Price)</td>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Total</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items ?? new List<SimpleExampleInvoice.Models.InvoiceItem>())
+            {
+                <tr>
+                    <td>@item.Description</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.Price</td>
+                    <td>@(item.Quantity * item.Price)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 
-<a class="btn btn-dark" asp-action="Preview" asp-route-id="@Model.Id">
-    Vista previa / Imprimir
-</a>
+    <a class="btn btn-dark" asp-action="Preview" asp-route-id="@Model.Id">
+        Vista previa / Imprimir
+    </a>
+}
 
 <hr />
 
