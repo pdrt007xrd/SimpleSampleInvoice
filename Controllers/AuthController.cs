@@ -32,7 +32,7 @@ namespace SimpleExampleInvoice.Controllers
 
                 await HttpContext.SignInAsync("Cookies", principal);
                 
-                return RedirectToAction("Edit", "Invoice");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             ModelState.AddModelError("", "Credenciales incorrectas");

@@ -4,24 +4,37 @@
     var invoices = ViewBag.Invoices as List<Invoice> ?? new List<Invoice>();
     int totalPages = 0;
     int currentPage = 1;
+    var createdMessage = TempData["InvoiceCreatedMessage"] as string;
     if (ViewBag.TotalPages != null) { totalPages = (int)ViewBag.TotalPages; }
     if (ViewBag.CurrentPage != null) { currentPage = (int)ViewBag.CurrentPage; }
 }
 
+@if (!string.IsNullOrWhiteSpace(createdMessage))
+{
+    <div class="position-fixed top-50 start-50 translate-middle p-3" style="z-index: 1080;">
+        <div id="invoiceCreatedToast"
+             class="toast align-items-center text-bg-success border-0 shadow-lg"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true"
+             data-bs-delay="3200"
+             style="min-width: 520px; font-size: 1.15rem;">
+            <div class="d-flex align-items-center p-2">
+                <div class="toast-body fw-semibold py-3 px-3">
+                    @createdMessage
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
 
 <h2>Factura #@Model.Id</h2>
 
 <hr />
 
-<!-- ================= CLIENT ================= -->
-
 <form asp-action="Edit" method="post">
     <input type="hidden" name="id" value="@Model.Id" />
-
-    <div class="mb-3">
-        <label>Título</label>
-        <input class="form-control" name="Titulo" value="@Model.Titulo" />
-    </div>
 
     <div class="mb-3">
         <label>Nombre de la Empresa</label>
@@ -38,19 +51,15 @@
     </button>
 </form>
 
-
 <hr />
 
-<!-- ================= ADD ITEM ================= -->
 <h4>Agregar detalle</h4>
 
 <form asp-action="AddItem" method="post">
     <input type="hidden" name="invoiceId" value="@Model.Id" />
 
     <input class="form-control mb-2" name="description" placeholder="Descripción" />
-
     <input class="form-control mb-2" name="quantity" type="number" placeholder="Cantidad" />
-
     <input class="form-control mb-2" name="price" type="number" step="0.01" placeholder="Precio" />
 
     <button class="btn btn-success">
@@ -60,7 +69,6 @@
 
 <hr />
 
-<!-- ================= ITEMS LIST ================= -->
 <h4>Detalles</h4>
 
 <table class="table table-bordered">
@@ -79,7 +87,7 @@
                 <td>@item.Description</td>
                 <td>@item.Quantity</td>
                 <td>@item.Price</td>
-                <td>@(item.Quantity* item.Price)</td>
+                <td>@(item.Quantity * item.Price)</td>
             </tr>
         }
     </tbody>
@@ -91,7 +99,6 @@
 
 <hr />
 
-<!-- ================= ALL INVOICES ================= -->
 <h4 class="mt-4">Lista de Facturas Creadas</h4>
 
 <table class="table table-sm table-striped table-bordered">
@@ -104,33 +111,18 @@
         </tr>
     </thead>
     <tbody>
-
-      
-
         @foreach (var inv in invoices)
         {
             <tr>
                 <td>@($"PP{inv.Id:000}")</td>
-
                 <td>@inv.ClientName</td>
+                <td>RD$ @((inv.Items?.Sum(i => i.Price * i.Quantity) ?? 0).ToString("N2"))</td>
                 <td>
-                    RD$
-                    @((inv.Items?.Sum(i => i.Price * i.Quantity) ?? 0).ToString("N2"))
-
-
-                </td>
-                <td>
-                    <a class="btn btn-sm btn-primary" href="/Invoice/Edit/@inv.Id">
-                        Editar
-                    </a>
-
-                    <a class="btn btn-sm btn-dark" href="/Invoice/Preview/@inv.Id" target="_blank">
-                        Imprimir
-                    </a>
+                    <a class="btn btn-sm btn-primary" href="/Invoice/Edit/@inv.Id">Editar</a>
+                    <a class="btn btn-sm btn-dark" href="/Invoice/Preview/@inv.Id" target="_blank">Imprimir</a>
                 </td>
             </tr>
         }
-
     </tbody>
 </table>
 
@@ -141,11 +133,23 @@
             @for (int i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : "")">
-                    <a class="page-link" href="/Invoice/Edit?page=@i">
-                        @i
-                    </a>
+                    <a class="page-link" href="/Invoice/Edit/@Model.Id?page=@i">@i</a>
                 </li>
             }
         </ul>
     </nav>
+}
+
+@if (!string.IsNullOrWhiteSpace(createdMessage))
+{
+    @section Scripts {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const el = document.getElementById('invoiceCreatedToast');
+                if (!el) return;
+                const toast = new bootstrap.Toast(el);
+                toast.show();
+            });
+        </script>
+    }
 }

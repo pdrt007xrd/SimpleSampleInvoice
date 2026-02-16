@@ -189,7 +189,6 @@
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/scopedcss/bundle/SimpleExampleInvoice.styles.css
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/scopedcss/projectbundle/SimpleExampleInvoice.bundle.scp.css
-/home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/compressed/q3xe7zg6bu-{0}-lugek5hnai-lugek5hnai.gz
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/compressed/7ar0in4flb-{0}-61n19gt1b8-61n19gt1b8.gz
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/compressed/erarc0r1rw-{0}-fr7q2aak1r-fr7q2aak1r.gz
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/compressed/0ynn05in3t-{0}-bqjiyaj88i-bqjiyaj88i.gz
@@ -265,3 +264,4 @@
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/SimpleExampleInvoice.genruntimeconfig.cache
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/ref/SimpleExampleInvoice.dll
 /home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/SimpleExampleInvoice.sourcelink.json
+/home/mrb/Desktop/SimpleExampleInvoice/obj/Debug/net10.0/compressed/q3xe7zg6bu-{0}-p7jex226bq-p7jex226bq.gz

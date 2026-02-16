@@ -22,24 +22,30 @@ namespace SimpleExampleInvoice.Controllers
         // ===============================
         // CREATE OR EDIT INVOICE
         // ===============================
+        [HttpGet]
+        public IActionResult Create()
+        {
+            var newInvoice = new Invoice
+            {
+                CreatedAt = DateTime.Now,
+                Titulo = string.Empty,
+                CompanyName = string.Empty,
+                ClientName = string.Empty
+            };
+
+            _context.Invoices.Add(newInvoice);
+            _context.SaveChanges();
+            TempData["InvoiceCreatedMessage"] = $"Factura #{newInvoice.Id} creada exitosamente";
+
+            return RedirectToAction("Edit", new { id = newInvoice.Id });
+        }
 
         public IActionResult Edit(int id = 0, int page = 1)
         {
             const int pageSize = 10;
 
             if (id == 0)
-            {
-                var newInvoice = new Invoice
-                {
-                    CreatedAt = DateTime.Now,
-                    Titulo = ""
-                };
-
-                _context.Invoices.Add(newInvoice);
-                _context.SaveChanges();
-
-                return RedirectToAction("Edit", new { id = newInvoice.Id });
-            }
+                return RedirectToAction("Index", "Dashboard");
 
             var invoice = _context.Invoices
                 .Include(i => i.Items)
@@ -66,13 +72,12 @@ namespace SimpleExampleInvoice.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, string titulo, string companyName, string clientName)
+        public IActionResult Edit(int id, string companyName, string clientName)
         {
             var invoice = _context.Invoices.Find(id);
             if (invoice == null)
                 return NotFound();
 
-            invoice.Titulo = titulo?.Trim() ?? string.Empty;
             invoice.CompanyName = companyName?.Trim() ?? string.Empty;
             invoice.ClientName = clientName?.Trim() ?? string.Empty;
             _context.SaveChanges();

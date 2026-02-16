@@ -5,6 +5,7 @@ using SimpleExampleInvoice.Data;
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddAuthentication("Cookies")
@@ -18,10 +19,7 @@ builder.Services.AddAuthentication("Cookies")
 builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
-    
+    options.UseSqlServer(connectionString)
 );
 
 var app = builder.Build();
