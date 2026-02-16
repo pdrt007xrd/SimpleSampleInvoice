@@ -6,6 +6,7 @@ using SimpleExampleInvoice.Data;
 using SimpleExampleInvoice.Models;
 using SimpleExampleInvoice.Pdf;
 using QuestPDF.Fluent;
+using System.Text;
 
 namespace SimpleExampleInvoice.Controllers
 {
@@ -153,6 +154,94 @@ namespace SimpleExampleInvoice.Controllers
                 $"inline; filename=factura_{invoice.Id}.pdf";
 
             return File(pdf, "application/pdf");
+        }
+
+        public IActionResult PrintPos(int id)
+        {
+            var invoice = _context.Invoices
+                .Include(i => i.Items)
+                .FirstOrDefault(i => i.Id == id);
+
+            if (invoice == null)
+                return NotFound();
+
+            var ticket = BuildPosTicket(invoice);
+            var bytes = Encoding.UTF8.GetBytes(ticket);
+
+            Response.Headers["Content-Disposition"] =
+                $"inline; filename=factura_{invoice.Id}_pos.txt";
+
+            return File(bytes, "text/plain; charset=utf-8");
+        }
+
+        private static string BuildPosTicket(Invoice invoice)
+        {
+            const int width = 32;
+            const int leftMargin = 2;
+            const string escInit = "\u001B\u0040";
+            const string escBoldOn = "\u001B\u0045\u0001";
+            const string escBoldOff = "\u001B\u0045\u0000";
+            var lines = new List<string>();
+            var company = string.IsNullOrWhiteSpace(invoice.CompanyName)
+                ? "Servicios Generales EM"
+                : invoice.CompanyName.Trim();
+
+            static string Money(decimal value) => $"RD$ {value:N2}";
+            static string Rule(int lineWidth) => new('-', lineWidth);
+            static string Center(string value, int lineWidth)
+            {
+                if (value.Length >= lineWidth)
+                    return value;
+
+                var left = (lineWidth - value.Length) / 2;
+                return new string(' ', left) + value;
+            }
+            static string WithMargin(string value, int margin) => new string(' ', margin) + value;
+
+            lines.Add(string.Empty);
+            lines.Add(Center(company, width));
+            lines.Add(Center($"Factura: PP{invoice.Id:D6}", width));
+            lines.Add(Center($"Fecha: {DateTime.Now:dd/MM/yyyy hh:mm tt}", width));
+            lines.Add(string.Empty);
+            if (!string.IsNullOrWhiteSpace(invoice.ClientName))
+            {
+                lines.Add($"Cliente: {invoice.ClientName.Trim()}");
+                lines.Add(string.Empty);
+            }
+
+            lines.Add(Rule(width));
+            lines.Add(Rule(width));
+            lines.Add(string.Empty);
+
+            foreach (var item in invoice.Items ?? Enumerable.Empty<InvoiceItem>())
+            {
+                lines.Add(item.Description ?? string.Empty);
+                lines.Add($"{item.Quantity} x {Money(item.Price)}");
+                lines.Add(Money(item.Total).PadLeft(width));
+                lines.Add(string.Empty);
+            }
+
+            var subtotal = (invoice.Items ?? Enumerable.Empty<InvoiceItem>()).Sum(i => i.Total);
+            var itbis = subtotal * 0.18m;
+            var total = subtotal + itbis;
+
+            lines.Add(Rule(width));
+            lines.Add(Rule(width));
+            lines.Add(string.Empty);
+            lines.Add($"SUBTOTAL: {Money(subtotal)}".PadLeft(width));
+            lines.Add($"ITBIS 18%: {Money(itbis)}".PadLeft(width));
+            lines.Add($"TOTAL: {Money(total)}".PadLeft(width));
+            lines.Add(string.Empty);
+            lines.Add(Rule(width));
+            lines.Add(Center("Gracias por su compra", width));
+            lines.Add(string.Empty);
+            lines.Add(string.Empty);
+
+            var content = string.Join(
+                Environment.NewLine,
+                lines.Select(line => WithMargin(line, leftMargin)));
+
+            return $"{escInit}{escBoldOn}{content}{Environment.NewLine}{escBoldOff}";
         }
 
     }

@@ -101,8 +101,8 @@ else
                 <tr>
                     <td>@item.Description</td>
                     <td>@item.Quantity</td>
-                    <td>@item.Price</td>
-                    <td>@(item.Quantity * item.Price)</td>
+                    <td>@($"RD$ {item.Price:N2}")</td>
+                    <td>@($"RD$ {(item.Quantity * item.Price):N2}")</td>
                 </tr>
             }
         </tbody>

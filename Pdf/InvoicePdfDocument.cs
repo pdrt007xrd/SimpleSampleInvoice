@@ -28,6 +28,10 @@ namespace SimpleExampleInvoice.Pdf
             return $"809-{middle}-{last}";
         }
 
+        private static string FormatRd(decimal amount)
+        {
+            return $"RD$ {amount:N2}";
+        }
 
 
         public void Compose(IDocumentContainer container)
@@ -38,15 +42,16 @@ namespace SimpleExampleInvoice.Pdf
                 page.Size(80, 300, Unit.Millimetre);
 
                 // márgenes tipo FACTURA 5
-                page.MarginTop(10);
+                page.MarginTop(28);
                 page.MarginBottom(10);
                 page.MarginHorizontal(6);
 
-                page.DefaultTextStyle(x => x.FontSize(9));
+                page.DefaultTextStyle(x => x.FontSize(9).Bold());
 
                 page.Content().Column(col =>
                 {
                     col.Spacing(2); // compacto POS
+                    col.Item().PaddingTop(10);
                     var companyName = string.IsNullOrWhiteSpace(_invoice.CompanyName)
                         ? "Servicios Generales EM"
                         : _invoice.CompanyName;
@@ -76,7 +81,7 @@ namespace SimpleExampleInvoice.Pdf
                             .AlignCenter()
                             .Text($"Cliente: {_invoice.ClientName}")
                             .FontSize(9)
-                            .SemiBold();
+                            .Bold();
                     }
 
                     col.Item().AlignCenter()
@@ -95,18 +100,18 @@ namespace SimpleExampleInvoice.Pdf
                         .LineHorizontal(0.5f);
 
                     // ===== ITEMS =====
-                    foreach (var item in _invoice.Items)
+                    foreach (var item in _invoice.Items ?? Enumerable.Empty<InvoiceItem>())
                     {
                         col.Item().Text(item.Description).Bold();
 
                         col.Item().Row(row =>
                         {
                             row.RelativeItem()
-                                .Text($"{item.Quantity} x {item.Price:C}");
+                                .Text($"{item.Quantity} x {FormatRd(item.Price)}");
 
                             row.ConstantItem(55)
                                 .AlignRight()
-                                .Text($"{item.Total:C}");
+                                .Text(FormatRd(item.Total));
                         });
 
                         col.Item().PaddingBottom(2);
@@ -123,21 +128,21 @@ namespace SimpleExampleInvoice.Pdf
                         .LineHorizontal(0.5f);
 
                     // ===== ITBIS + TOTAL =====
-                    var subtotal = _invoice.Items.Sum(x => x.Total);
+                    var subtotal = (_invoice.Items ?? Enumerable.Empty<InvoiceItem>()).Sum(x => x.Total);
                     var itbis = subtotal * 0.18m;
                     var total = subtotal + itbis;
 
                     col.Item().AlignRight()
-                        .Text($"SUBTOTAL: {subtotal:C}")
+                        .Text($"SUBTOTAL: {FormatRd(subtotal)}")
                         .FontSize(9);
 
                     col.Item().AlignRight()
-                        .Text($"I.T.B.I.S (18%): {itbis:C}")
+                        .Text($"I.T.B.I.S (18%): {FormatRd(itbis)}")
                         .FontSize(9)
-                        .SemiBold();
+                        .Bold();
 
                     col.Item().AlignRight()
-                        .Text($"TOTAL: {total:C}")
+                        .Text($"TOTAL: {FormatRd(total)}")
                         .FontSize(11)
                         .Bold();
 

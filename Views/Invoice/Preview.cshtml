@@ -13,6 +13,19 @@
         Imprimir / Descargar
     </a>
 
+    <a class="btn btn-secondary"
+       href="/Invoice/PrintPos/@ViewBag.InvoiceId"
+       target="_blank">
+        Ticket POS (texto)
+    </a>
+
+    <button class="btn btn-success"
+            type="button"
+            id="openPrinteraBtn"
+            data-pos-url="/Invoice/PrintPos/@ViewBag.InvoiceId">
+        Abrir en PrinterA
+    </button>
+
     <a class="btn btn-primary"
        href="/Invoice/Edit/@ViewBag.InvoiceId">
         Volver
@@ -23,3 +36,59 @@
         Crear Factura
     </a>
 </div>
+
+<script>
+    (function () {
+        const button = document.getElementById('openPrinteraBtn');
+        if (!button) return;
+
+        const posPath = button.getAttribute('data-pos-url');
+        const posUrl = new URL(posPath, window.location.origin).toString();
+
+        async function sharePosTicket() {
+            const shareData = {
+                title: 'Ticket POS',
+                text: 'Abrir ticket en PrinterA',
+                url: posUrl
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                    return true;
+                } catch {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        async function copyPosUrl() {
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(posUrl);
+                    alert('No se pudo abrir PrinterA automáticamente. URL de ticket copiada.');
+                    return;
+                }
+            } catch {
+                // Fallback below
+            }
+
+            prompt('Copia esta URL y compártela a PrinterA:', posUrl);
+        }
+
+        button.addEventListener('click', async function () {
+            // Intento best-effort de deep link hacia PrinterA
+            window.location.href = 'printera://';
+
+            // Fallback funcional para iPhone: compartir URL POS
+            setTimeout(async function () {
+                const shared = await sharePosTicket();
+                if (!shared) {
+                    await copyPosUrl();
+                }
+            }, 700);
+        });
+    })();
+</script>
