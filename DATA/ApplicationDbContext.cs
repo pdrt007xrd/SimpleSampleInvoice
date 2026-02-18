@@ -18,7 +18,11 @@ namespace SimpleExampleInvoice.Data
 
             modelBuilder.Entity<InvoiceItem>()
                 .Property(x => x.Price)
-                .HasPrecision(18, 2);
+                .HasPrecision(18, 4);
+
+            modelBuilder.Entity<InvoiceItem>()
+                .Property(x => x.Quantity)
+                .HasPrecision(18, 4);
         }
 
     }

@@ -7,6 +7,7 @@ using SimpleExampleInvoice.Models;
 using SimpleExampleInvoice.Pdf;
 using QuestPDF.Fluent;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace SimpleExampleInvoice.Controllers
 {
@@ -104,7 +105,7 @@ namespace SimpleExampleInvoice.Controllers
         // ADD ITEM
         // ===============================
         [HttpPost]
-        public IActionResult AddItem(int invoiceId, string description, int quantity, decimal price)
+        public IActionResult AddItem(int invoiceId, string description, decimal quantity, decimal price)
         {
             var invoice = _context.Invoices.Find(invoiceId);
             if (invoice == null)
@@ -127,16 +128,19 @@ namespace SimpleExampleInvoice.Controllers
         // ===============================
         // PREVIEW PDF
         // ===============================
-        public IActionResult Preview(int id)
+        public IActionResult Preview(int id, string format = "fiscal")
         {
             ViewBag.InvoiceId = id;
+            ViewBag.Format = string.Equals(format, "clasico", StringComparison.OrdinalIgnoreCase)
+                ? "clasico"
+                : "fiscal";
             return View();
         }
 
         // ===============================
         // PRINT / DOWNLOAD PDF
         // ===============================
-        public IActionResult Print(int id)
+        public IActionResult Print(int id, string format = "fiscal")
         {
             QuestPDF.Settings.License = LicenseType.Community;
 
@@ -147,7 +151,13 @@ namespace SimpleExampleInvoice.Controllers
             if (invoice == null)
                 return NotFound();
 
-            var document = new InvoicePdfDocument(invoice);
+            var normalizedFormat = string.Equals(format, "clasico", StringComparison.OrdinalIgnoreCase)
+                ? "clasico"
+                : "fiscal";
+
+            IDocument document = normalizedFormat == "clasico"
+                ? new InvoicePdfClassicDocument(invoice)
+                : new InvoicePdfDocument(invoice);
             var pdf = document.GeneratePdf();
 
             Response.Headers["Content-Disposition"] =
@@ -176,18 +186,19 @@ namespace SimpleExampleInvoice.Controllers
 
         private static string BuildPosTicket(Invoice invoice)
         {
-            const int width = 32;
+            const int width = 48;
             const int leftMargin = 2;
             const string escInit = "\u001B\u0040";
             const string escBoldOn = "\u001B\u0045\u0001";
             const string escBoldOff = "\u001B\u0045\u0000";
             var lines = new List<string>();
+            var genericNcfNumber = GetGenericNcfNumber();
             var company = string.IsNullOrWhiteSpace(invoice.CompanyName)
                 ? "Servicios Generales EM"
                 : invoice.CompanyName.Trim();
 
             static string Money(decimal value) => $"RD$ {value:N2}";
-            static string Rule(int lineWidth) => new('-', lineWidth);
+            static string Rule(int lineWidth) => new('*', lineWidth);
             static string Center(string value, int lineWidth)
             {
                 if (value.Length >= lineWidth)
@@ -202,10 +213,14 @@ namespace SimpleExampleInvoice.Controllers
             lines.Add(Center(company, width));
             lines.Add(Center($"Factura: PP{invoice.Id:D6}", width));
             lines.Add(Center($"Fecha: {DateTime.Now:dd/MM/yyyy hh:mm tt}", width));
+            lines.Add(Center("FACTURA DE CONSUMO", width));
+            lines.Add(Center($"NCF: {genericNcfNumber}", width));
+            lines.Add(Center("DETALLE DE FACTURA", width));
             lines.Add(string.Empty);
             if (!string.IsNullOrWhiteSpace(invoice.ClientName))
             {
                 lines.Add($"Cliente: {invoice.ClientName.Trim()}");
+                lines.Add(string.Empty);
                 lines.Add(string.Empty);
             }
 
@@ -216,20 +231,16 @@ namespace SimpleExampleInvoice.Controllers
             foreach (var item in invoice.Items ?? Enumerable.Empty<InvoiceItem>())
             {
                 lines.Add(item.Description ?? string.Empty);
-                lines.Add($"{item.Quantity} x {Money(item.Price)}");
+                lines.Add($"{item.Quantity:0.####} x {Money(item.Price)}");
                 lines.Add(Money(item.Total).PadLeft(width));
                 lines.Add(string.Empty);
             }
 
-            var subtotal = (invoice.Items ?? Enumerable.Empty<InvoiceItem>()).Sum(i => i.Total);
-            var itbis = subtotal * 0.18m;
-            var total = subtotal + itbis;
+            var total = (invoice.Items ?? Enumerable.Empty<InvoiceItem>()).Sum(i => i.Total);
 
             lines.Add(Rule(width));
             lines.Add(Rule(width));
             lines.Add(string.Empty);
-            lines.Add($"SUBTOTAL: {Money(subtotal)}".PadLeft(width));
-            lines.Add($"ITBIS 18%: {Money(itbis)}".PadLeft(width));
             lines.Add($"TOTAL: {Money(total)}".PadLeft(width));
             lines.Add(string.Empty);
             lines.Add(Rule(width));
@@ -242,6 +253,13 @@ namespace SimpleExampleInvoice.Controllers
                 lines.Select(line => WithMargin(line, leftMargin)));
 
             return $"{escInit}{escBoldOn}{content}{Environment.NewLine}{escBoldOff}";
+        }
+
+        private static string GetGenericNcfNumber()
+        {
+            var first = RandomNumberGenerator.GetInt32(0, 1_000_000);
+            var second = RandomNumberGenerator.GetInt32(0, 1_000_000);
+            return $"E{first:D6}{second:D6}";
         }
 
     }

@@ -21,6 +21,13 @@ namespace SimpleExampleInvoice.Pdf
             return $"PP{id:D6}";
         }
 
+        private string GetGenericNcfNumber()
+        {
+            var first = RandomNumberGenerator.GetInt32(0, 1_000_000);
+            var second = RandomNumberGenerator.GetInt32(0, 1_000_000);
+            return $"E{first:D6}{second:D6}";
+        }
+
         private string GetGenericPhone()
         {
             var middle = $"6{RandomNumberGenerator.GetInt32(0, 100):D2}";
@@ -28,131 +35,89 @@ namespace SimpleExampleInvoice.Pdf
             return $"809-{middle}-{last}";
         }
 
-        private static string FormatRd(decimal amount)
-        {
-            return $"RD$ {amount:N2}";
-        }
-
-
         public void Compose(IDocumentContainer container)
         {
             container.Page(page =>
             {
-                // 80mm térmico
                 page.Size(80, 300, Unit.Millimetre);
-
-                // márgenes tipo FACTURA 5
-                page.MarginTop(28);
+                page.MarginTop(41);
                 page.MarginBottom(10);
-                page.MarginHorizontal(6);
+                page.MarginHorizontal(2);
 
-                page.DefaultTextStyle(x => x.FontSize(9).Bold());
+                page.DefaultTextStyle(x => x.FontSize(8));
 
-                page.Content().Column(col =>
-                {
-                    col.Spacing(2); // compacto POS
-                    col.Item().PaddingTop(10);
-                    var companyName = string.IsNullOrWhiteSpace(_invoice.CompanyName)
-                        ? "Servicios Generales EM"
-                        : _invoice.CompanyName;
-
-                    // ===== HEADER =====
-                    col.Item().AlignCenter()
-                        .Text(companyName)
-                        .FontSize(14)
-                        .Bold();
-
-                    // col.Item().AlignCenter()
-                    //     .Text("Av. Principal #123, Santo Domingo");
-
-                    col.Item().AlignCenter()
-                        .Text($"Tel: {GetGenericPhone()}");
-
-                    col.Item().AlignCenter()
-                        .Text($"Fecha: {DateTime.Now:dd/MM/yyyy hh:mm tt}");
-
-                    // espacio claro antes del número de factura
-                    col.Item().PaddingTop(6);
-                    
-                    // ===== CLIENTE =====
-                    if (!string.IsNullOrWhiteSpace(_invoice.ClientName))
+                page.Content()
+                    .Padding(3)
+                    .Column(col =>
                     {
-                        col.Item().PaddingTop(6)
-                            .AlignCenter()
-                            .Text($"Cliente: {_invoice.ClientName}")
-                            .FontSize(9)
-                            .Bold();
-                    }
+                        const int lineLength = 50;
+                        var genericNcfNumber = GetGenericNcfNumber();
+                        var now = DateTime.Now;
+                        var items = _invoice.Items ?? Enumerable.Empty<InvoiceItem>();
+                        var subtotal = items.Sum(x => x.Total);
+                        var total = subtotal;
+                        var companyName = string.IsNullOrWhiteSpace(_invoice.CompanyName)
+                            ? "NOMBRE COMERCIAL"
+                            : _invoice.CompanyName.Trim().ToUpperInvariant();
 
-                    col.Item().AlignCenter()
-                        .Text($"Factura No: {GetInvoiceNumber(_invoice.Id)}")
-                        .FontSize(10)
-                        .Bold();
+                        col.Spacing(2);
 
-                    // ===== doble separación HEADER → ITEMS =====
-                    col.Item()
-                        .PaddingTop(6)
-                        .LineHorizontal(0.5f);
+                        col.Item().AlignCenter().Text(companyName).Bold();
+                        col.Item().AlignCenter().Text($"TELEFONO: {GetGenericPhone()}").Bold();
+                        col.Item().Text("Direccion General de Impuestos Internos");
+                        col.Item().Text("RNC 401506254");
+                        col.Item().Text("RES DGI: 23-2009 DEL 06/ABRIL/2009");
+                        col.Item().PaddingTop(2).AlignCenter().Text("COMPROBANTE AUTORIZADO POR DGII").Bold();
+                        col.Item().Text($"{now:dd/MM/yyyy}    {now:HH:mm}");
+                        col.Item().Text("NIF: 1234560000000002");
+                        col.Item().Text($"NCF: {genericNcfNumber}");
 
-                    col.Item()
-                        .PaddingTop(1)
-                        .PaddingBottom(4)
-                        .LineHorizontal(0.5f);
+                        col.Item().AlignCenter().Text(new string('-', lineLength));
+                        col.Item().AlignCenter().Text("FACTURA DE CONSUMO").Bold();
+                        col.Item().AlignCenter().Text(new string('-', lineLength));
+                        col.Item().PaddingTop(2).Row(row =>
+                        {
+                            row.RelativeItem().Text("DETALLE DE FACTURA").Bold();
+                            row.ConstantItem(55).AlignRight().Text("VALOR").Bold();
+                        });
+                        col.Item().AlignCenter().Text(new string('-', lineLength));
 
-                    // ===== ITEMS =====
-                    foreach (var item in _invoice.Items ?? Enumerable.Empty<InvoiceItem>())
-                    {
-                        col.Item().Text(item.Description).Bold();
+                        if (!string.IsNullOrWhiteSpace(_invoice.ClientName))
+                        {
+                            col.Item().Text($"CLIENTE: {_invoice.ClientName.Trim()}");
+                            col.Item().PaddingBottom(3);
+                        }
 
+                        foreach (var item in items)
+                        {
+                            col.Item().Row(row =>
+                            {
+                                row.RelativeItem().Text($"{item.Quantity:0.####} x {item.Price:N2}");
+                                row.ConstantItem(55).AlignRight().Text($"{item.Total:N2}");
+                            });
+
+                            col.Item().Row(row =>
+                            {
+                                row.RelativeItem().Text(item.Description);
+                                row.ConstantItem(55).AlignRight().Text(string.Empty);
+                            });
+                            col.Item().AlignCenter().Text(new string('-', lineLength));
+                        }
+
+                        col.Item().AlignRight().Text($"Subtotal       {subtotal:N2}");
+                        col.Item().AlignRight().Text($"Total          {total:N2}").Bold();
+                        col.Item().PaddingTop(2).AlignRight().Text($"Efectivo       {total:N2}");
+                        col.Item().AlignRight().Text("Cambio         0.00");
+                        col.Item().PaddingTop(4).AlignCenter().Text("Gracias por su compra, vuelva pronto");
+                        col.Item().PaddingTop(4).AlignCenter().Text(new string('-', lineLength));
+                        col.Item().Text("NIF: 1234560000000002");
                         col.Item().Row(row =>
                         {
-                            row.RelativeItem()
-                                .Text($"{item.Quantity} x {FormatRd(item.Price)}");
-
-                            row.ConstantItem(55)
-                                .AlignRight()
-                                .Text(FormatRd(item.Total));
+                            row.RelativeItem().Text($"ABCDFGH {GetInvoiceNumber(_invoice.Id)}");
+                            row.ConstantItem(50).AlignRight().Text("V: 1.00 XXX");
                         });
-
-                        col.Item().PaddingBottom(2);
-                    }
-
-                    // ===== doble separación ITEMS → TOTAL =====
-                    col.Item()
-                        .PaddingTop(6)
-                        .LineHorizontal(0.5f);
-
-                    col.Item()
-                        .PaddingTop(1)
-                        .PaddingBottom(4)
-                        .LineHorizontal(0.5f);
-
-                    // ===== ITBIS + TOTAL =====
-                    var subtotal = (_invoice.Items ?? Enumerable.Empty<InvoiceItem>()).Sum(x => x.Total);
-                    var itbis = subtotal * 0.18m;
-                    var total = subtotal + itbis;
-
-                    col.Item().AlignRight()
-                        .Text($"SUBTOTAL: {FormatRd(subtotal)}")
-                        .FontSize(9);
-
-                    col.Item().AlignRight()
-                        .Text($"I.T.B.I.S (18%): {FormatRd(itbis)}")
-                        .FontSize(9)
-                        .Bold();
-
-                    col.Item().AlignRight()
-                        .Text($"TOTAL: {FormatRd(total)}")
-                        .FontSize(11)
-                        .Bold();
-
-                    // ===== separación TOTAL → SALUDO =====
-                    col.Item().PaddingTop(12);
-
-                    col.Item().AlignCenter()
-                        .Text("Gracias por su compra")
-                        .FontSize(9);
-                });
+                        col.Item().Text("//");
+                    });
             });
         }
     }
