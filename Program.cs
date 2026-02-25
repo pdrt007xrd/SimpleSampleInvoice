@@ -5,6 +5,7 @@ using SimpleExampleInvoice.Data;
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://*:5001"); //permite que toda la aplicacion sea accesible desde cualquier IP en el puerto 5001
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddControllersWithViews();
