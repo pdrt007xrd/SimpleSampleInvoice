@@ -27,7 +27,7 @@ namespace SimpleExampleInvoice.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            return RedirectToAction("Edit");
+            return RedirectToAction(nameof(Edit), new { id = 0, page = 1 });
         }
 
         public IActionResult Edit(int id = 0, int page = 1)
@@ -131,9 +131,14 @@ namespace SimpleExampleInvoice.Controllers
         public IActionResult Preview(int id, string format = "fiscal")
         {
             ViewBag.InvoiceId = id;
-            ViewBag.Format = string.Equals(format, "clasico", StringComparison.OrdinalIgnoreCase)
-                ? "clasico"
-                : "fiscal";
+            var requested = (format ?? string.Empty).Trim().ToLowerInvariant();
+            ViewBag.Format = requested switch
+            {
+                "clasico" => "clasico",
+                "generico" => "generico",
+                "generico2" => "generico2",
+                _ => "fiscal"
+            };
             return View();
         }
 
@@ -151,13 +156,15 @@ namespace SimpleExampleInvoice.Controllers
             if (invoice == null)
                 return NotFound();
 
-            var normalizedFormat = string.Equals(format, "clasico", StringComparison.OrdinalIgnoreCase)
-                ? "clasico"
-                : "fiscal";
+            var normalizedFormat = (format ?? string.Empty).Trim().ToLowerInvariant();
 
-            IDocument document = normalizedFormat == "clasico"
-                ? new InvoicePdfClassicDocument(invoice)
-                : new InvoicePdfDocument(invoice);
+            IDocument document = normalizedFormat switch
+            {
+                "clasico" => new InvoicePdfClassicDocument(invoice),
+                "generico" => new InvoicePdfGenericDocument(invoice),
+                "generico2" => new InvoicePdfGenericAltDocument(invoice),
+                _ => new InvoicePdfDocument(invoice)
+            };
             var pdf = document.GeneratePdf();
 
             Response.Headers["Content-Disposition"] =
